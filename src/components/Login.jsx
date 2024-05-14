@@ -58,6 +58,7 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <label style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '6vh', color: 'blue', textDecoration: 'underline'}} onClick={() => navigation("/signup")}>Don't Have An Account Yet?</label>
         <button style={{ margin: 'auto', display: 'block', marginTop: 20, marginBottom: 20 }} type="submit">Login</button>
       </form>
     </div>
