@@ -40,6 +40,7 @@ const Home = () => {
       if (authUser) {
         // User is signed in.
         setUser(authUser);
+        fetchData(); // Call fetchData when user is signed in
       } else {
         // No user is signed in.
         setUser(null);
@@ -47,7 +48,6 @@ const Home = () => {
     });
     return () => {
       unsubscribe();
-      fetchData();
     };
 
   }, []);
