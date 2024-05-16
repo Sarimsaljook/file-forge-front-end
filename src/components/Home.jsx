@@ -18,6 +18,12 @@ const Home = () => {
 
   const [fullUserDirectory, setFullUserDirectory] = useState('');
 
+  const [showModal, setShowModal] = useState(false);
+  let [selectedFolder, setSelectedFolder] = useState();
+
+  const [file, setFile] = useState();
+  const [formData, setFormData] = useState();
+
   const expand = false;
 
   useEffect(() => {
@@ -53,6 +59,92 @@ const Home = () => {
   }, []);
 
   const userRedirect = () => { navigation("/login") }
+
+  // Function to open file explorer and select a file
+const selectFile = () => {
+  return new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = (event) => {
+          const file = event.target.files[0];
+          if (file) {
+              resolve(file);
+          } else {
+              reject('No file selected');
+          }
+      };
+      input.click();
+  });
+};
+
+// Function to extract folder names from directory structure
+const extractFolderNames = (directoryStructure) => {
+  const folders = new Set();
+  const lines = directoryStructure.split('\n');
+  lines.forEach(line => {
+      const parts = line.split('/');
+      for (let i = 0; i < parts.length - 1; i++) {
+          folders.add(parts.slice(0, i + 1).join('/'));
+      }
+  });
+  return Array.from(folders);
+};
+
+const handleSelectChange = (event) => {
+  setSelectedFolder(event.target.value);
+};
+
+const handleFolderSelect = () => {
+
+  if (selectedFolder !== '/') {
+    selectedFolder = `/${selectedFolder}/`;
+  } else {
+    selectedFolder = '/';
+  }
+
+  if (selectedFolder) {
+    // Perform upload logic here
+    console.log("Selected folder:", selectedFolder);
+  
+    // Send file via POST request
+        axios.post('http://localhost:5000/ngrok-reference-upload-file', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                 uid: auth.currentUser.uid,
+                'file-name' : file.name,
+                'file-path' : '/' + selectedFolder + '/'
+            }
+        }).then((res) => { 
+          console.log(res.data);
+          setShowModal(false);
+          alert("File uploaded successfully!");
+        }).catch((err) => { console.log(err) });
+
+
+    
+
+  } else {
+    alert("Please select a folder.");
+  }
+};
+
+  const addNewFile = async () => {
+    try {
+        // Open file explorer to select a file
+       const userSelectedFile = await selectFile();
+       setFile(userSelectedFile);
+
+        // Create form data
+        const POSTrequestformData = new FormData();
+        POSTrequestformData.append('file', file);
+
+        setFormData(POSTrequestformData);
+
+        setShowModal(true);
+    } catch (error) {
+        console.error('Error uploading file:', error);
+    }
+};
 
   return ( user ? 
     (
@@ -109,7 +201,41 @@ const Home = () => {
     </div>
 
     <div style={{ margin: 'auto', textAlign: 'center', marginTop: 70, fontSize: 20 }}>
-        <Button>Add New File +</Button>
+        <Button onClick={addNewFile}>Add New File +</Button>
+
+        {showModal === true ? (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            width: 600
+          }}>
+            <span style={{ float: 'right', cursor: 'pointer' }} onClick={() => setShowModal(false)}>&times;</span>
+            <h6 style={{ marginBottom: 25, fontSize: 25 }}>Choose Where You Want to Store Your File</h6>
+            <select style={{ width: 320 }} value={selectedFolder} onChange={handleSelectChange}>
+              <option value="">Select A Folder From Your Drive:</option>
+              <option value="/">/</option>
+              {extractFolderNames(fullUserDirectory).map(folder => (
+                <option key={folder} value={folder}>{folder}</option>
+              ))}
+            </select>
+            <Button variant='success' style={{ marginLeft: 15 }} onClick={handleFolderSelect}>Select</Button>
+          </div>
+        </div>
+      ) : null}
+
+
     </div>
 
     </div>
