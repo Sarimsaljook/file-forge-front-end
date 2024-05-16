@@ -30,7 +30,7 @@ const Home = () => {
 
     const fetchData = () => {
       if(auth.currentUser){
-      axios.get("http://localhost:5000/ngrok-reference-user-directory", {
+      axios.get("https://file-forge-60f430c77491.herokuapp.com/ngrok-reference-user-directory", {
         headers: {
           'uid': auth.currentUser.uid,
         }
@@ -107,7 +107,7 @@ const handleFolderSelect = () => {
     console.log("Selected folder:", selectedFolder);
   
     // Send file via POST request
-        axios.post('http://localhost:5000/ngrok-reference-upload-file', formData, {
+        axios.post('https://file-forge-60f430c77491.herokuapp.com/ngrok-reference-upload-file', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                  uid: auth.currentUser.uid,
