@@ -24,6 +24,8 @@ const Home = () => {
   const [file, setFile] = useState();
   const [formData, setFormData] = useState();
 
+  const [expandedFolders, setExpandedFolders] = useState([]);
+
   const expand = false;
 
   useEffect(() => {
@@ -118,6 +120,7 @@ const handleFolderSelect = () => {
           console.log(res.data);
           setShowModal(false);
           alert("File uploaded successfully!");
+          window.location.reload();
         }).catch((err) => { console.log(err) });
 
 
@@ -145,6 +148,73 @@ const handleFolderSelect = () => {
         console.error('Error uploading file:', error);
     }
 };
+
+const toggleFolder = (folder) => {
+  setExpandedFolders(expandedFolders.includes(folder)
+    ? expandedFolders.filter(f => f !== folder)
+    : [...expandedFolders, folder]);
+};
+
+const renderDirectory = (directory, path = '') => {
+  return (
+    <div style={{ paddingLeft: 20, fontSize: 20 }}>
+      {Object.entries(directory).map(([key, value]) => {
+        const currentPath = path ? `${path}/${key}` : key;
+        if (typeof value === 'string') {
+          return <div key={currentPath}>{getEmojiForFileType(key)} {key}</div>;
+        } else {
+          return (
+            <div key={currentPath}>
+              <div style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={() => toggleFolder(currentPath)}>
+                {expandedFolders.includes(currentPath) ? '📂' : '📁'} {key}
+              </div>
+              {expandedFolders.includes(currentPath) && renderDirectory(value, currentPath)}
+            </div>
+          );
+        }
+      })}
+    </div>
+  );
+};
+
+const parseDirectory = (directoryString) => {
+  const lines = directoryString.split('\n');
+  const root = {};
+  lines.forEach(line => {
+    const parts = line.split('/');
+    let current = root;
+    parts.forEach((part, index) => {
+      if (index === parts.length - 1) {
+        current[part] = 'file';
+      } else {
+        if (!current[part]) current[part] = {};
+        current = current[part];
+      }
+    });
+  });
+  return root;
+};
+
+const getEmojiForFileType = (filename) => {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+  const videoExtensions = ['mp4', 'mov', 'avi', 'mkv'];
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'flac'];
+
+  const extension = filename.split('.').pop().toLowerCase();
+
+  if (imageExtensions.includes(extension)) {
+    return '🖼️';
+  } else if (videoExtensions.includes(extension)) {
+    return '▶️';
+  } else if (audioExtensions.includes(extension)) {
+    return '🎵';
+  } else {
+    return '📄';
+  }
+};
+
+
+const directoryStructure = parseDirectory(fullUserDirectory);
 
   return ( user ? 
     (
@@ -197,11 +267,14 @@ const handleFolderSelect = () => {
     </div>
 
     <div style={{ margin: 'auto', textAlign: 'left', marginTop: 70, width: 670 }}>
-    {fullUserDirectory ? <h6>{fullUserDirectory}</h6> : <h3>Loading Your FileForge Drive...</h3>}
+    {fullUserDirectory ? renderDirectory(directoryStructure) : <h3>Loading Your FileForge Drive...</h3>}
     </div>
 
     <div style={{ margin: 'auto', textAlign: 'center', marginTop: 70, fontSize: 20 }}>
         <Button onClick={addNewFile}>Add New File +</Button>
+        <Button style={{ 
+          marginLeft: 15
+         }} variant='success' >Add Folder 📁</Button>
 
         {showModal === true ? (
         <div style={{
